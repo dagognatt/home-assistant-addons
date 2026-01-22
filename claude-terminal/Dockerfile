@@ -37,13 +37,16 @@ RUN apk add --no-cache \
     ripgrep \
     --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community ttyd
 
-# Install Claude Code using native installer
+# Install Claude Code via npm (avoids Bun's AVX CPU requirement)
+# The native installer uses Bun which requires AVX instructions not available on all CPUs
 # Alpine/musl requires USE_BUILTIN_RIPGREP=0 with system ripgrep installed
 ENV USE_BUILTIN_RIPGREP=0
 ENV PATH="/root/.local/bin:${PATH}"
-RUN curl -fsSL https://claude.ai/install.sh | bash \
-    && /root/.local/bin/claude --version \
-    && /root/.local/bin/claude install --yes 2>/dev/null || true
+RUN npm install -g @anthropic-ai/claude-code \
+    && mkdir -p /root/.local/bin \
+    && ln -sf "$(which claude)" /root/.local/bin/claude \
+    && claude --version \
+    && claude install --yes 2>/dev/null || true
 
 # Install Home Assistant CLI
 RUN HA_ARCH=$(cat /tmp/ha_arch) && \
